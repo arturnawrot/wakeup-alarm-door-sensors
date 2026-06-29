@@ -1,6 +1,7 @@
 services:
   app:
     image: ${DOCKERHUB_USERNAME}/wakeup:latest
+    pull_policy: always
     build:
       context: ./docker
       dockerfile: php/Dockerfile
@@ -34,6 +35,7 @@ services:
     
   horizon:
     image: ${DOCKERHUB_USERNAME}/wakeup:latest
+    pull_policy: always
     build:
       context: ./docker
       dockerfile: php/Dockerfile
@@ -48,6 +50,7 @@ services:
 
   scheduler:
     image: ${DOCKERHUB_USERNAME}/wakeup:latest
+    pull_policy: always
     build:
       context: ./docker
       dockerfile: php/Dockerfile
