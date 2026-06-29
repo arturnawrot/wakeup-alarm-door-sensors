@@ -1,0 +1,48 @@
+server {
+    listen 8888;
+    server_name ${APP_DOMAIN};
+
+    root /var/www/html/public;
+    index index.php;
+
+    # Security Headers
+    add_header X-Frame-Options "SAMEORIGIN";
+    add_header X-Content-Type-Options "nosniff";
+
+    location / {
+        try_files $uri $uri/ /index.php?$query_string;
+    }
+
+    location ~ \.php$ {
+        include fastcgi_params;
+        fastcgi_pass app:9000; # Assumes 'app' is your PHP-FPM container/service name
+        fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
+
+        # ---- THIS LINE IS CRITICAL BEHIND A REVERSE PROXY ----
+        # It ensures Laravel knows its public URL
+        # which is essential for sessions and redirects.
+        fastcgi_param HTTP_HOST $host;
+        fastcgi_param X-Real-IP $remote_addr;
+        fastcgi_param X-Forwarded-For $proxy_add_x_forwarded_for;
+        fastcgi_param X-Forwarded-Proto $scheme;
+        fastcgi_param X-Forwarded-Host $host;
+        fastcgi_param X-Forwarded-Port $server_port;
+    }
+
+    location ~ /\.ht {
+        deny all;
+    }
+}
+
+#------------------------------------------------------------
+# Block 2: The Default Catch-All Server
+# This block will handle ANY other request on port 8888,
+# including direct access via the numerical IP.
+#------------------------------------------------------------
+server {
+    listen 8888 default_server;
+    server_name _; # This is a catch-all for any server name not defined above.
+
+    # Close the connection without a response. You could also use 'return 403;'
+    return 444;
+}
