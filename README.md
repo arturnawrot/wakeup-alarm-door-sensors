@@ -80,6 +80,7 @@ MUSIC_PLAYER_URL=http://192.168.11.1:8000  # host machine FastAPI service
 ./run.sh optimize           # clear and rebuild all caches
 ./run.sh logs [service]     # tail Docker logs
 ./run.sh set_file_permissions
+./run.sh fetch_updates      # git pull + docker pull + migrate + optimize
 ```
 
 ## ESP32 API
@@ -156,6 +157,31 @@ uvicorn main:app --host 0.0.0.0 --port 8000
 ```
 
 Make sure `MUSIC_PLAYER_URL` in `.env` points to this machine (e.g. `http://192.168.1.x:8000`).
+
+## CI/CD
+
+A GitHub Actions workflow (`.github/workflows/docker.yml`) automatically builds and pushes the PHP Docker image to Docker Hub whenever files inside `docker/` change on the `main` branch.
+
+**One-time setup — add these secrets to your GitHub repository** (Settings → Secrets → Actions):
+
+| Secret               | Value                                   |
+|----------------------|-----------------------------------------|
+| `DOCKERHUB_USERNAME` | Your Docker Hub username                |
+| `DOCKERHUB_TOKEN`    | A Docker Hub access token (not password)|
+
+**One-time setup — set `DOCKERHUB_USERNAME` in your `.env`** on the Pi so `docker compose pull` knows which image to fetch:
+
+```dotenv
+DOCKERHUB_USERNAME=your-dockerhub-username
+```
+
+### Updating the Pi
+
+```bash
+./run.sh fetch_updates
+```
+
+This pulls the latest code from git, pulls any updated Docker image from Docker Hub, restarts containers, runs new migrations, and rebuilds caches.
 
 ## Queue / Horizon
 

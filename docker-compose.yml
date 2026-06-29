@@ -1,5 +1,6 @@
 services:
   app:
+    image: ${DOCKERHUB_USERNAME}/wakeup:latest
     build:
       context: ./docker
       dockerfile: php/Dockerfile
@@ -32,6 +33,7 @@ services:
     restart: always
     
   horizon:
+    image: ${DOCKERHUB_USERNAME}/wakeup:latest
     build:
       context: ./docker
       dockerfile: php/Dockerfile
@@ -45,6 +47,7 @@ services:
       - redis
 
   scheduler:
+    image: ${DOCKERHUB_USERNAME}/wakeup:latest
     build:
       context: ./docker
       dockerfile: php/Dockerfile

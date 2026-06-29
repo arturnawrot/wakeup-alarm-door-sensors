@@ -105,6 +105,15 @@ function optimize {
   artisan view:cache
 }
 
+function fetch_updates {
+  git pull
+  docker compose pull
+  docker compose up -d
+  migrate
+  optimize
+  set_file_permissions
+}
+
 function setup {
   composer install
   npm_install
