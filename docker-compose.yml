@@ -1,0 +1,61 @@
+services:
+  app:
+    build:
+      context: ./docker
+      dockerfile: php/Dockerfile
+    container_name: app
+    restart: always
+    volumes:
+      - .:/var/www/html # Map current directory to the container
+      # - ./docker/php/conf.d/xdebug.ini:/usr/local/etc/php/conf.d/docker-php-ext-xdebug.ini    # remove for production
+      # - ./docker/php/conf.d/error_reporting.ini:/usr/local/etc/php/conf.d/error_reporting.ini # remove for production
+      - ./docker/php/conf.d/uploads.ini:/usr/local/etc/php/conf.d/uploads.ini
+    ports:
+      - "5173:5173" # Vite development server
+    depends_on:
+      - redis
+
+  nginx:
+    image: nginx:stable
+    container_name: nginx
+    restart: always
+    ports:
+      - "8888:8888" # Nginx port
+    volumes:
+      - .:/var/www/html # Map current directory to Nginx
+      - ./docker/nginx/default.conf:/etc/nginx/conf.d/default.conf
+    depends_on:
+      - app
+  redis:
+    image: redis:alpine
+    container_name: redis
+    restart: always
+    
+  horizon:
+    build:
+      context: ./docker
+      dockerfile: php/Dockerfile
+    container_name: horizon
+    restart: always
+    command: /usr/bin/supervisord -c /etc/supervisor/conf.d/supervisord.conf
+    volumes:
+      - .:/var/www/html
+    depends_on:
+      - app
+      - redis
+
+  scheduler:
+    build:
+      context: ./docker
+      dockerfile: php/Dockerfile
+    container_name: scheduler
+    restart: always
+    command: php /var/www/html/artisan schedule:work
+    volumes:
+      - .:/var/www/html
+    depends_on:
+      - app
+      - redis
+
+volumes:
+  db-data:

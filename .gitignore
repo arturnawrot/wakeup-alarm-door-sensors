@@ -29,5 +29,4 @@ stripe
 .env.testing
 *.Identifier
 temp.txt
-docker-compose.yml
 .claude/
