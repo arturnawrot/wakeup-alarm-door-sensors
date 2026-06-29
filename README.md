@@ -30,8 +30,15 @@ Door alarm system running on a Raspberry Pi 4. ESP32 sensors report door activit
 
 ## Requirements
 
+**Software**
+
 - Docker + Docker Compose
 - Node.js (for asset compilation inside the container via `run.sh`)
+
+**Hardware (provided by you)**
+
+- One or more ESP32 microcontrollers wired to door sensors and connected to your LAN
+- A machine with speakers attached (the host running the music player microservice) — this is what plays the alarm audio
 
 ## Setup
 
@@ -88,6 +95,28 @@ X-API-Key: <key>
 
 Returns `200 OK` on success. API keys are managed in the web UI under **API Keys**.
 
+### Example sketch
+
+`examples/esp32_sensor.ino` is a ready-to-flash Arduino sketch. Fill in the four constants at the top before uploading:
+
+```cpp
+const char* ssid       = "";          // Wi-Fi network name
+const char* password   = "";          // Wi-Fi password
+const char* apiKey     = "";          // key from the web UI
+const char* deviceName = "esp32-front-door";  // matches an alarm slot
+```
+
+The server URL is set to `http://192.168.1.66:8888/api/door/signal` — change it to your host's LAN IP.
+
+Default pin wiring:
+
+| Pin | Purpose       | Mode         |
+|-----|---------------|--------------|
+| 18  | Door sensor   | INPUT_PULLUP |
+| 2   | Onboard LED   | OUTPUT       |
+
+The sketch debounces the sensor signal (75 ms), retries Wi-Fi every 5 s, and retries failed POST requests every 3 s.
+
 ## Music player microservice
 
 The Python FastAPI service (`HostMachineMusicPlayer`) must be running on the host machine. It exposes:
@@ -99,6 +128,34 @@ The Python FastAPI service (`HostMachineMusicPlayer`) must be running on the hos
 | GET    | `/status` |                   | Playback status      |
 
 Playback auto-stops after 60 minutes if `/stop` is not called.
+
+### Example server
+
+`examples/music_player_server.py` is a reference FastAPI implementation that downloads an MP3 from the URL and plays it on loop through the OS default audio device using `pygame-ce`. It is an example — you are expected to implement your own microservice that satisfies the `MusicPlayerInterface` contract (`play(url)` / `stop()`).
+
+**Requirements** (Python 3.14, Windows 10):
+
+```
+fastapi
+uvicorn[standard]
+pygame-ce
+```
+
+**Setup:**
+
+```powershell
+py -3.14 -m venv .venv
+.\.venv\Scripts\Activate.ps1
+pip install -r requirements.txt
+```
+
+**Run:**
+
+```powershell
+uvicorn main:app --host 0.0.0.0 --port 8000
+```
+
+Make sure `MUSIC_PLAYER_URL` in `.env` points to this machine (e.g. `http://192.168.1.x:8000`).
 
 ## Queue / Horizon
 
